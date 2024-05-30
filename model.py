@@ -37,7 +37,7 @@ class QLearningAgent:
         self.q_table[state][action] += self.learning_rate * (
             reward + self.discount_factor * max_next_q_value - self.q_table[state][action]
         )
-        
+
 def load_model(filename):
     try:
         with open(filename, 'rb') as f:
@@ -67,34 +67,50 @@ def save_model(agent, filename):
             'epsilon': agent.epsilon
         }, f)
 
+def get_feedback(guess, target):
+    feedback = []
+    for g_char, t_char in zip(guess, target):
+        if g_char == t_char:
+            feedback.append(2)  # Correct position
+        elif g_char in target:
+            feedback.append(1)  # Correct letter, wrong position
+        else:
+            feedback.append(0)  # Incorrect letter
+    return feedback
+
 correctGuess = 0
 def run_episode(agent, available_actions, r):
     spell = SpellChecker()
     randWord = r.word(word_min_length=5, word_max_length=5)
+    global correctGuess
     max_attempts = 6
     user_attempts = 0
-    global correctGuess
-    state = "start"
+    state = tuple([0] * 5)  # Initial state with no feedback
+
+    guessed_correctly = False
 
     while user_attempts < max_attempts:
         action = agent.choose_action(state, available_actions)
         
-        new_state = action  # Update based on action and current state
-        reward = 1 if action == randWord else -0.1 
-            
-        agent.update_q_table(state, action, reward, new_state, available_actions)
-        state = new_state
+        new_state = get_feedback(action, randWord)  # Get feedback for the guessed word
+        reward = sum(new_state) - 0.1  # Reward based on feedback
+        
+        agent.update_q_table(state, action, reward, tuple(new_state), available_actions)
+        state = tuple(new_state)
+
+        print(f"The agent guessed '{action}'.")
 
         if action == randWord:
+            guessed_correctly = True
             correctGuess += 1
-            print("Congratulations! The agent guessed the word correctly.")
             break
         else:
-            print(f"The agent guessed '{action}' which is not correct.")
             user_attempts += 1
 
-    if user_attempts == max_attempts:
-        print(f"The agent did not guess the word within the maximum number of attempts. The word was {randWord}")
+    if guessed_correctly:
+        print(f"Congratulations! The agent guessed the word '{randWord}' correctly in {user_attempts + 1} attempts.")
+    else:
+        print(f"The agent did not guess the word '{randWord}' within the maximum number of attempts.")
 
 def main(num_episodes=100):
     agent = load_model('q_learning_model.pkl')
@@ -108,8 +124,9 @@ def main(num_episodes=100):
     for episode in range(num_episodes):
         run_episode(agent, available_actions, r)
         print(f"Episode {episode + 1}/{num_episodes} completed.")
-    print(f"The model guessed {correctGuess} words correctly!")
+        
+    print(f"The agent guessed {correctGuess} words correctly!")
     save_model(agent, 'q_learning_model.pkl')
 
 if __name__ == "__main__":
-    main(num_episodes=1000)  # Adjust the number of episodes here
+    main(num_episodes=100)  # Adjust the number of episodes here
