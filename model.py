@@ -67,11 +67,13 @@ def save_model(agent, filename):
             'epsilon': agent.epsilon
         }, f)
 
+correctGuess = 0
 def run_episode(agent, available_actions, r):
     spell = SpellChecker()
     randWord = r.word(word_min_length=5, word_max_length=5)
     max_attempts = 6
     user_attempts = 0
+    global correctGuess
     state = "start"
 
     while user_attempts < max_attempts:
@@ -84,6 +86,7 @@ def run_episode(agent, available_actions, r):
         state = new_state
 
         if action == randWord:
+            correctGuess += 1
             print("Congratulations! The agent guessed the word correctly.")
             break
         else:
@@ -105,8 +108,8 @@ def main(num_episodes=100):
     for episode in range(num_episodes):
         run_episode(agent, available_actions, r)
         print(f"Episode {episode + 1}/{num_episodes} completed.")
-
+    print(f"The model guessed {correctGuess} words correctly!")
     save_model(agent, 'q_learning_model.pkl')
 
 if __name__ == "__main__":
-    main(num_episodes=100)  # Adjust the number of episodes here
+    main(num_episodes=1000)  # Adjust the number of episodes here
