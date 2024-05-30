@@ -29,7 +29,6 @@ class QLearningAgent:
         if action not in self.q_table[state]:
             self.q_table[state][action] = 0
         
-        # Initialize next_state in Q-table if it doesn't exist
         if next_state not in self.q_table:
             self.q_table[next_state] = {a: 0 for a in available_actions}
 
@@ -43,7 +42,7 @@ def load_model(filename):
         with open(filename, 'rb') as f:
             data = pickle.load(f)
             agent = QLearningAgent()
-            agent.q_table = data.get('q_table', {}) 
+            agent.q_table = data.get('q_table', {})
             agent.learning_rate = data.get('learning_rate', 0.1)
             agent.discount_factor = data.get('discount_factor', 0.9)
             agent.epsilon = data.get('epsilon', 0.1)
@@ -68,17 +67,14 @@ def save_model(agent, filename):
         }, f)
 
 def get_feedback(guess, target):
-    feedback = []
-    for g_char, t_char in zip(guess, target):
+    feedback = [0] * 5
+    for i, (g_char, t_char) in enumerate(zip(guess, target)):
         if g_char == t_char:
-            feedback.append(2)  # Correct position
+            feedback[i] = 2  # Correct position
         elif g_char in target:
-            feedback.append(1)  # Correct letter, wrong position
-        else:
-            feedback.append(0)  # Incorrect letter
+            feedback[i] = 1  # Correct letter, wrong position
     return feedback
 
-correctGuess = 0
 def run_episode(agent, available_actions, r):
     spell = SpellChecker()
     randWord = r.word(word_min_length=5, word_max_length=5)
@@ -119,9 +115,9 @@ def main(num_episodes=100):
         save_model(agent, 'q_learning_model.pkl')
 
     r = RandomWord()
-    available_actions = [r.word(word_min_length=5, word_max_length=5) for _ in range(100)]
-
+    
     for episode in range(num_episodes):
+        available_actions = [r.word(word_min_length=5, word_max_length=5) for _ in range(20)]
         run_episode(agent, available_actions, r)
         print(f"Episode {episode + 1}/{num_episodes} completed.")
         
@@ -129,4 +125,4 @@ def main(num_episodes=100):
     save_model(agent, 'q_learning_model.pkl')
 
 if __name__ == "__main__":
-    main(num_episodes=100)  # Adjust the number of episodes here
+    main(num_episodes=150)  # Adjust the number of episodes here
