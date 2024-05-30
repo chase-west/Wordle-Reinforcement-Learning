@@ -43,7 +43,7 @@ def load_model(filename):
         with open(filename, 'rb') as f:
             data = pickle.load(f)
             agent = QLearningAgent()
-            agent.q_table = data.get('q_table', {})  # Use default empty dictionary if 'q_table' key is missing
+            agent.q_table = data.get('q_table', {}) 
             agent.learning_rate = data.get('learning_rate', 0.1)
             agent.discount_factor = data.get('discount_factor', 0.9)
             agent.epsilon = data.get('epsilon', 0.1)
