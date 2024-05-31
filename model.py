@@ -1,7 +1,8 @@
 import pickle
 from wonderwords import RandomWord
-from spellchecker import SpellChecker
 import random
+import multiprocessing
+from spellchecker import SpellChecker
 
 class QLearningAgent:
     def __init__(self, learning_rate=0.1, discount_factor=0.9, epsilon=0.1):
@@ -11,7 +12,6 @@ class QLearningAgent:
         self.epsilon = epsilon
 
     def choose_action(self, state, available_actions):
-        # Epsilon-greedy action selection
         if random.uniform(0, 1) < self.epsilon:
             return random.choice(available_actions)
         else:
@@ -75,10 +75,9 @@ def get_feedback(guess, target):
             feedback[i] = 1  # Correct letter, wrong position
     return feedback
 
-def run_episode(agent, available_actions, r):
+def run_episode(agent, available_actions, r, correctGuess, lock):
     spell = SpellChecker()
     randWord = r.word(word_min_length=5, word_max_length=5)
-    global correctGuess
     max_attempts = 6
     user_attempts = 0
     state = tuple([0] * 5)  # Initial state with no feedback
@@ -94,19 +93,25 @@ def run_episode(agent, available_actions, r):
         agent.update_q_table(state, action, reward, tuple(new_state), available_actions)
         state = tuple(new_state)
 
-        print(f"The agent guessed '{action}'.")
+        #print(f"The agent guessed '{action}'.")
 
         if action == randWord:
             guessed_correctly = True
-            correctGuess += 1
+            with lock:
+                correctGuess.value += 1
             break
         else:
             user_attempts += 1
 
     if guessed_correctly:
         print(f"Congratulations! The agent guessed the word '{randWord}' correctly in {user_attempts + 1} attempts.")
-    else:
-        print(f"The agent did not guess the word '{randWord}' within the maximum number of attempts.")
+    #else:
+        #print(f"The agent did not guess the word '{randWord}' within the maximum number of attempts.")
+
+def run_single_episode(episode_args):
+    agent, available_actions, r, correctGuess, lock = episode_args
+    run_episode(agent, available_actions, r, correctGuess, lock)
+    return agent.q_table
 
 def main(num_episodes=100):
     agent = load_model('q_learning_model.pkl')
@@ -115,14 +120,31 @@ def main(num_episodes=100):
         save_model(agent, 'q_learning_model.pkl')
 
     r = RandomWord()
-    
-    for episode in range(num_episodes):
-        available_actions = [r.word(word_min_length=5, word_max_length=5) for _ in range(20)]
-        run_episode(agent, available_actions, r)
-        print(f"Episode {episode + 1}/{num_episodes} completed.")
-        
-    print(f"The agent guessed {correctGuess} words correctly!")
+    manager = multiprocessing.Manager()
+    correctGuess = manager.Value('i', 0)
+    lock = manager.Lock()  # Managed Lock object
+
+    available_actions = [r.word(word_min_length=5, word_max_length=5) for _ in range(20)]
+
+    episode_args = [(agent, available_actions, r, correctGuess, lock) for _ in range(num_episodes)]
+
+    with multiprocessing.Pool() as pool:
+        q_tables = pool.map(run_single_episode, episode_args)
+
+    # Aggregate q_tables from all episodes
+    for q_table in q_tables:
+        for state, actions in q_table.items():
+            if state not in agent.q_table:
+                agent.q_table[state] = actions
+            else:
+                for action, value in actions.items():
+                    if action not in agent.q_table[state]:
+                        agent.q_table[state][action] = value
+                    else:
+                        agent.q_table[state][action] = max(agent.q_table[state][action], value)
+
+    print(f"The agent guessed {correctGuess.value} words correctly!")
     save_model(agent, 'q_learning_model.pkl')
 
 if __name__ == "__main__":
-    main(num_episodes=150)  # Adjust the number of episodes here
+    main(num_episodes=1000)
