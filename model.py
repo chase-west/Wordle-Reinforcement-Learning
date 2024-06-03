@@ -93,7 +93,7 @@ def run_episode(agent, available_actions, r, correctGuess, lock):
             continue
         
         taken_actions.add(action)  # Add current action to the set of taken actions
-        print(f"Attempt {user_attempts + 1}: The agent guessed '{action}'.")
+        #print(f"Attempt {user_attempts + 1}: The agent guessed '{action}'.")
 
         new_state = tuple(get_feedback(action, randWord))  # Get feedback for the guessed word
         reward = sum(new_state) - 0.1  # Reward based on feedback
@@ -111,7 +111,7 @@ def run_episode(agent, available_actions, r, correctGuess, lock):
     if guessed_correctly:
         print(f"Congratulations! The agent guessed the word '{randWord}' correctly in {user_attempts + 1} attempts.")
   #  else:
-        print(f"The agent did not guess the word '{randWord}' within the maximum number of attempts.")
+     #   print(f"The agent did not guess the word '{randWord}' within the maximum number of attempts.")
 
 def run_single_episode(episode_args):
     agent, available_actions, r, correctGuess, lock = episode_args
@@ -140,7 +140,8 @@ def main(num_episodes=100):
     
     with multiprocessing.Pool() as pool:
         for i, episode in enumerate(episode_args):
-            print(f"Starting iteration {i + 1}/{num_episodes}")
+            if i % 50 == 0:
+                print(f"Starting iteration {i + 1}/{num_episodes}")
             # Run each episode in parallel
             q_table = pool.apply(run_single_episode, (episode,))
             
@@ -159,4 +160,4 @@ def main(num_episodes=100):
     save_model(agent, 'q_learning_model.pkl')
 
 if __name__ == "__main__":
-    main(num_episodes=100)
+    main(num_episodes=1000)
