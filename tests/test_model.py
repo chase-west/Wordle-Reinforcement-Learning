@@ -35,14 +35,15 @@ def test_save_load_roundtrip(tmp_path):
 
 def test_get_feedback():
     target_word = "apple"
-    assert get_feedback("april", target_word) == [2, 0, 1, 0, 0], "Feedback for 'april' should be [2, 0, 1, 0, 0]"
-    assert get_feedback("apply", target_word) == [2, 0, 0, 1, 0], "Feedback for 'apply' should be [2, 0, 0, 1, 0]"
-    assert get_feedback("orange", target_word) == [0, 1, 0, 0, 0], "Feedback for 'orange' should be [0, 1, 0, 0, 0]"
+    assert get_feedback("april", target_word) == [2, 2, 0, 0, 1], "Feedback for 'april' should be [2, 0, 1, 0, 1]"
+    assert get_feedback("apply", target_word) == [2, 2, 2, 2, 0], "Feedback for 'apply' should be [2, 0, 0, 1, 0]"
+    assert get_feedback("blues", target_word) == [0, 1, 0, 1, 0], "Feedback for 'orange' should be [0, 1, 0, 0, 0]"
 
 def test_q_learning_agent_methods():
     agent = QLearningAgent()
+
     # Test action selection methods (choose_action, greedy_action)
-    available_actions = ["apple", "banana", "cherry"]
+    available_actions = ["board", "candy", "delta"]
     state = (0, 0, 0, 0, 0)
     action = agent.choose_action(state, available_actions)
     assert action in available_actions, f"Action {action} should be in available actions {available_actions}"

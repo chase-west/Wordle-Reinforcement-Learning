@@ -70,9 +70,8 @@ def get_feedback(guess, target):
     for i, (g_char, t_char) in enumerate(zip(guess, target)):
         if g_char == t_char:
             feedback[i] = 2  # Correct position
-        elif g_char in target:
+        elif g_char in target and g_char != t_char:
             feedback[i] = 1  # Correct letter, wrong position
-   # print(f"Feedback for guess '{guess}' against target '{target}' is {feedback}")  # Verbose output
     return feedback
 
 def run_episode(agent, available_actions, r, correctGuess, lock):
