@@ -1,12 +1,19 @@
+import os
+import sys
 import pytest
-from wordle_rl import QLearningAgent, load_model, get_feedback
+
+# Adjust the path to main.py based on its location relative to the tests directory
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Import the necessary components from main.py
+from main import QLearningAgent, load_model, get_feedback
 
 @pytest.fixture
 def agent():
-    return load_model('q_learning_model.pkl')
+    return load_model('../q_learning_model.pkl')  # Adjust the path as necessary
 
 def test_load_model():
-    agent = load_model('q_learning_model.pkl')
+    agent = load_model('../q_learning_model.pkl')  # Adjust the path as necessary
     assert isinstance(agent, QLearningAgent), "Loaded agent should be an instance of QLearningAgent"
 
 def test_get_feedback():
