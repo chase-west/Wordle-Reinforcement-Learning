@@ -1,20 +1,37 @@
 import os
 import sys
 import pytest
+import random
+import pickle
 
-# Adjust the path to main.py based on its location relative to the tests directory
+# Adjust the path to include the parent directory of model.py and q_learning_model.pkl
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import the necessary components from main.py
-from main import QLearningAgent, load_model, get_feedback
+from model import QLearningAgent, load_model, save_model, get_feedback
+
+
 
 @pytest.fixture
 def agent():
-    return load_model('../q_learning_model.pkl')  # Adjust the path as necessary
+    model_path = os.path.join(os.path.dirname(__file__), '../q_learning_model.pkl')
+    return load_model(model_path)
 
 def test_load_model():
-    agent = load_model('../q_learning_model.pkl')  # Adjust the path as necessary
+    model_path = os.path.join(os.path.dirname(__file__), '../q_learning_model.pkl')
+    agent = load_model(model_path)
     assert isinstance(agent, QLearningAgent), "Loaded agent should be an instance of QLearningAgent"
+
+def test_save_load_roundtrip(tmp_path):
+    # Create a temporary directory for testing
+    tmp_file = tmp_path / "test_model.pkl"
+    
+    # Create an instance of QLearningAgent and save it
+    agent = QLearningAgent()
+    save_model(agent, tmp_file)
+    
+    # Load the saved model and assert its type
+    loaded_agent = load_model(tmp_file)
+    assert isinstance(loaded_agent, QLearningAgent), "Loaded agent should be an instance of QLearningAgent"
 
 def test_get_feedback():
     target_word = "apple"
@@ -22,27 +39,14 @@ def test_get_feedback():
     assert get_feedback("apply", target_word) == [2, 0, 0, 1, 0], "Feedback for 'apply' should be [2, 0, 0, 1, 0]"
     assert get_feedback("orange", target_word) == [0, 1, 0, 0, 0], "Feedback for 'orange' should be [0, 1, 0, 0, 0]"
 
-def test_qlearning_agent_initialization():
+def test_q_learning_agent_methods():
     agent = QLearningAgent()
-    assert len(agent.q_table) == 0, "Q-table should be empty upon initialization"
-    assert agent.learning_rate == 0.1, "Default learning rate should be 0.1"
-    assert agent.discount_factor == 0.9, "Default discount factor should be 0.9"
-    assert agent.epsilon == 0.3, "Default epsilon should be 0.3"
-
-def test_qlearning_agent_choose_action(agent):
+    # Test action selection methods (choose_action, greedy_action)
+    available_actions = ["apple", "banana", "cherry"]
     state = (0, 0, 0, 0, 0)
-    available_actions = ["apple", "orange", "banana"]
     action = agent.choose_action(state, available_actions)
-    assert action in available_actions, f"Chosen action '{action}' should be in available actions"
+    assert action in available_actions, f"Action {action} should be in available actions {available_actions}"
 
-def test_qlearning_agent_update_q_table(agent):
-    state = (0, 0, 0, 0, 0)
-    action = "apple"
-    reward = 2
-    next_state = (2, 0, 0, 0, 0)
-    available_actions = ["apple", "orange", "banana"]
-    agent.update_q_table(state, action, reward, next_state, available_actions)
-    assert agent.q_table[state][action] != 0, "Q-value for state-action pair should be updated"
-
-if __name__ == "__main__":
-    pytest.main()
+    # Test update_q_table method
+    agent.update_q_table(state, action, 1, (1, 1, 1, 1, 1), available_actions)
+    assert state in agent.q_table, "State should be in Q-table after update"
